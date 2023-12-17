@@ -99,10 +99,10 @@ def train(args):
     for epoch in range(args.epochs):
         t = time.time()
         model.train()
-        optimizer.zero_grad()
+        # optimizer.zero_grad()
         epoch_mae = 0.0
-        epoch_loss = 0.0
         for i in data['idx_train']:
+            optimizer.zero_grad()
             single_features = data['features'][:,:,i]
             single_adj = data['adj_train'][:,:,i]
             embeddings = model.encode(single_features, single_adj)
@@ -113,7 +113,10 @@ def train(args):
             print(train_metrics['mae'])
             # print(data['labels'][i])
             epoch_mae += train_metrics['mae']
-            epoch_loss += train_metrics['loss']
+            per_loss = train_metrics['loss']
+
+            # wandb.log({"epoch": epoch, "loss": per_loss})
+
             if args.grad_clip is not None:
                 max_norm = float(args.grad_clip)
                 all_params = list(model.parameters())
@@ -122,9 +125,8 @@ def train(args):
             optimizer.step()
         lr_scheduler.step()
         epoch_mae = epoch_mae / len(data['idx_train'])
-        epoch_loss = epoch_loss / len(data['idx_train'])
-        # wandb.log({"epoch": epoch, "mae": epoch_mae, "loss": epoch_loss})
 
+        # wandb.log({"epoch": epoch, "mae": epoch_mae})
 
         logging.info(f'Epoch {epoch + 1}:  Average MAE = {epoch_mae}')
 
